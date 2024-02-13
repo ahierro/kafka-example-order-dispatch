@@ -22,22 +22,25 @@ class OrderCreatedHandlerTest {
 
     @Test
     void listen_Success() throws Exception {
+        String key = UUID.randomUUID().toString();
         OrderCreatedDTO orderCreatedDTO = OrderCreatedDTO.builder()
                 .item("Prduct 1")
                 .orderId(UUID.randomUUID()).build();
-        handler.listen(orderCreatedDTO);
-        verify(dispatchServiceMock, times(1)).process(orderCreatedDTO);
+        handler.listen(0, key, orderCreatedDTO);
+        verify(dispatchServiceMock, times(1)).process(key, orderCreatedDTO);
     }
 
     @Test
     public void listen_ServiceThrowsException() throws Exception {
+        String key = UUID.randomUUID().toString();
+
         OrderCreatedDTO orderCreatedDTO = OrderCreatedDTO.builder()
                 .item("Prduct 1")
                 .orderId(UUID.randomUUID()).build();
-        doThrow(new RuntimeException("Service failure")).when(dispatchServiceMock).process(orderCreatedDTO);
+        doThrow(new RuntimeException("Service failure")).when(dispatchServiceMock).process(key, orderCreatedDTO);
 
-        handler.listen(orderCreatedDTO);
+        handler.listen(0, key, orderCreatedDTO);
 
-        verify(dispatchServiceMock, times(1)).process(orderCreatedDTO);
+        verify(dispatchServiceMock, times(1)).process(key, orderCreatedDTO);
     }
 }

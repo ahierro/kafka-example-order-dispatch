@@ -21,6 +21,7 @@ import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
 import static com.kafka.example.dispatch.integration.TestConstants.ORDER_CREATED_TOPIC;
+import static java.util.UUID.randomUUID;
 import static org.awaitility.Awaitility.await;
 import static org.hamcrest.Matchers.equalTo;
 
@@ -58,11 +59,11 @@ public class OrderDispatchIntegrationTest {
      */
     @Test
     public void testOrderDispatchFlow() throws Exception {
-        UUID id = UUID.randomUUID();
+        UUID id = randomUUID();
         OrderCreatedDTO orderCreated = OrderCreatedDTO.builder()
                 .item("my-item")
                 .orderId(id).build();
-        sendMessage(ORDER_CREATED_TOPIC, orderCreated);
+        sendMessage(ORDER_CREATED_TOPIC, randomUUID().toString(), orderCreated);
 
         await().atMost(3, TimeUnit.SECONDS).pollDelay(100, TimeUnit.MILLISECONDS)
                 .until(testListener.dispatchPreparingCounter()::get, equalTo(1));
@@ -70,9 +71,10 @@ public class OrderDispatchIntegrationTest {
                 .until(testListener.orderDispatchedCounter()::get, equalTo(1));
     }
 
-    private void sendMessage(String topic, Object data) throws Exception {
+    private void sendMessage(String topic, String key, Object data) throws Exception {
         kafkaTemplate.send(MessageBuilder
                 .withPayload(data)
+                .setHeader(KafkaHeaders.KEY, key)
                 .setHeader(KafkaHeaders.TOPIC, topic)
                 .build()).get();
     }

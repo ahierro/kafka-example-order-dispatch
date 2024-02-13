@@ -12,7 +12,6 @@ import java.util.UUID;
 
 import static java.util.UUID.randomUUID;
 
-
 @Slf4j
 @RequiredArgsConstructor
 @Service
@@ -23,19 +22,19 @@ public class DispatchService {
 
     private final KafkaTemplate<String, Object> kafkaProducer;
 
-    public void process(OrderCreatedDTO orderCreated) throws Exception {
+    public void process(String key, OrderCreatedDTO orderCreated) throws Exception {
 
         DispatchPreparingDTO dispatchPreparingDTO = DispatchPreparingDTO.builder()
                 .orderId(orderCreated.getOrderId())
                 .build();
-        kafkaProducer.send(DISPATCH_TRACKING_TOPIC, dispatchPreparingDTO).get();
+        kafkaProducer.send(DISPATCH_TRACKING_TOPIC, key,dispatchPreparingDTO).get();
 
         OrderDispatchedDTO orderDispatched = OrderDispatchedDTO.builder()
                 .orderId(orderCreated.getOrderId())
                 .processedById(APPLICATION_ID)
                 .notes("Dispatched: " + orderCreated.getItem())
                 .build();
-        kafkaProducer.send(ORDER_DISPATCHED_TOPIC, orderDispatched.getOrderId().toString(), orderDispatched).get();
-        log.info("Sent messages: orderId: " + orderCreated.getOrderId() + " - processedById: " + APPLICATION_ID);
+        kafkaProducer.send(ORDER_DISPATCHED_TOPIC, key, orderDispatched).get();
+        log.info("Sent messages: key: " + key + " - orderId: " + orderCreated.getOrderId() + " - processedById: " + APPLICATION_ID);
     }
 }
