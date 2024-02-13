@@ -14,4 +14,6 @@ import lombok.NoArgsConstructor;
 public class OrderDispatchedDTO {
 
     UUID orderId;
+    UUID processedById;
+    String notes;
 }
