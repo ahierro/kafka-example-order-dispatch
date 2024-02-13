@@ -1,5 +1,4 @@
-package com.kafka.example.dispatch.dto;
-
+package com.kafka.example.dispatch.dto.out;
 import java.util.UUID;
 
 import lombok.AllArgsConstructor;
@@ -11,6 +10,7 @@ import lombok.NoArgsConstructor;
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-public class DispatchPreparingDTO {
-    private UUID orderId;
+public class DispatchCompletedDTO {
+    UUID orderId;
+    String dispatchedDate;
 }

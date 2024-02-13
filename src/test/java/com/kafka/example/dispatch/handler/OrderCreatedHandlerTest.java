@@ -1,6 +1,6 @@
 package com.kafka.example.dispatch.handler;
 
-import com.kafka.example.dispatch.dto.OrderCreatedDTO;
+import com.kafka.example.dispatch.dto.in.OrderCreatedDTO;
 import com.kafka.example.dispatch.service.DispatchService;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -16,7 +16,7 @@ import static org.mockito.Mockito.*;
 class OrderCreatedHandlerTest {
 
     @InjectMocks
-    private OrderCreatedHandler handler;
+    private OrderHandler handler;
     @Mock
     private DispatchService dispatchServiceMock;
 
@@ -26,7 +26,7 @@ class OrderCreatedHandlerTest {
         OrderCreatedDTO orderCreatedDTO = OrderCreatedDTO.builder()
                 .item("Prduct 1")
                 .orderId(UUID.randomUUID()).build();
-        handler.listen(0, key, orderCreatedDTO);
+        handler.listenOrderCreated(0, key, orderCreatedDTO);
         verify(dispatchServiceMock, times(1)).process(key, orderCreatedDTO);
     }
 
@@ -39,7 +39,7 @@ class OrderCreatedHandlerTest {
                 .orderId(UUID.randomUUID()).build();
         doThrow(new RuntimeException("Service failure")).when(dispatchServiceMock).process(key, orderCreatedDTO);
 
-        handler.listen(0, key, orderCreatedDTO);
+        handler.listenOrderCreated(0, key, orderCreatedDTO);
 
         verify(dispatchServiceMock, times(1)).process(key, orderCreatedDTO);
     }

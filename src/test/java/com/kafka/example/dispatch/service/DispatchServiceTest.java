@@ -1,8 +1,9 @@
 package com.kafka.example.dispatch.service;
 
-import com.kafka.example.dispatch.dto.DispatchPreparingDTO;
-import com.kafka.example.dispatch.dto.OrderCreatedDTO;
-import com.kafka.example.dispatch.dto.OrderDispatchedDTO;
+import com.kafka.example.dispatch.dto.out.DispatchCompletedDTO;
+import com.kafka.example.dispatch.dto.out.DispatchPreparingDTO;
+import com.kafka.example.dispatch.dto.in.OrderCreatedDTO;
+import com.kafka.example.dispatch.dto.out.OrderDispatchedDTO;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -14,6 +15,7 @@ import org.springframework.kafka.support.SendResult;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 
+import static java.util.UUID.randomUUID;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -35,10 +37,15 @@ class DispatchServiceTest {
 
     @Test
     void process_Success() throws Exception {
-        when(kafkaProducerMock.send(anyString(), anyString(), any(DispatchPreparingDTO.class))).thenReturn(sendReturnFuture);
-        when(kafkaProducerMock.send(anyString(), anyString(), any(OrderDispatchedDTO.class))).thenReturn(sendReturnFuture);
-        UUID id = UUID.randomUUID();
-        String key = UUID.randomUUID().toString();
+        when(kafkaProducerMock.send(anyString(), anyString(), any(DispatchPreparingDTO.class)))
+                .thenReturn(sendReturnFuture);
+        when(kafkaProducerMock.send(anyString(), anyString(), any(OrderDispatchedDTO.class)))
+                .thenReturn(sendReturnFuture);
+        when(kafkaProducerMock.send(anyString(), anyString(), any(DispatchCompletedDTO.class)))
+                .thenReturn(sendReturnFuture);
+
+        UUID id = randomUUID();
+        String key = randomUUID().toString();
 
         OrderCreatedDTO testEvent = OrderCreatedDTO.builder()
                 .item("Prduct 1")
@@ -48,12 +55,14 @@ class DispatchServiceTest {
                 .send(eq("dispatch.tracking"), eq(key), any(DispatchPreparingDTO.class));
         verify(kafkaProducerMock, times(1))
                 .send(eq("order.dispatched"), eq(key), any(OrderDispatchedDTO.class));
+        verify(kafkaProducerMock, times(1))
+                .send(eq("dispatch.tracking"), eq(key), any(DispatchCompletedDTO.class));
     }
 
     @Test
     public void testProcess_DispatchTrackingProducerThrowsException() {
-        UUID id = UUID.randomUUID();
-        String key = UUID.randomUUID().toString();
+        UUID id = randomUUID();
+        String key = randomUUID().toString();
         OrderCreatedDTO testEvent = OrderCreatedDTO.builder()
                 .item("Prduct 1")
                 .orderId(id).build();
@@ -71,8 +80,8 @@ class DispatchServiceTest {
 
     @Test
     public void testProcess_OrderDispatchedProducerThrowsException() {
-        UUID id = UUID.randomUUID();
-        String key = UUID.randomUUID().toString();
+        UUID id = randomUUID();
+        String key = randomUUID().toString();
 
         OrderCreatedDTO testEvent = OrderCreatedDTO.builder()
                 .item("Prduct 1")
@@ -88,6 +97,26 @@ class DispatchServiceTest {
                 .send(eq("dispatch.tracking"), eq(key), any(DispatchPreparingDTO.class));
         verify(kafkaProducerMock, times(1))
                 .send(eq("order.dispatched"), eq(key), any(OrderDispatchedDTO.class));
+        verifyNoMoreInteractions(kafkaProducerMock);
         assertThat(exception.getMessage(), equalTo("order dispatched producer failure"));
+    }
+
+    @Test
+    public void testProcess_SecondDispatchTrackingProducerThrowsException() {
+        when(kafkaProducerMock.send(anyString(), anyString(), any(DispatchPreparingDTO.class))).thenReturn(sendReturnFuture);
+        when(kafkaProducerMock.send(anyString(), anyString(), any(OrderDispatchedDTO.class))).thenReturn(sendReturnFuture);
+        UUID id = randomUUID();
+        String key = randomUUID().toString();
+        OrderCreatedDTO testEvent = OrderCreatedDTO.builder()
+                .item("Prduct 1")
+                .orderId(id).build();
+        doThrow(new RuntimeException("dispatch tracking producer failure")).when(kafkaProducerMock).send(eq("dispatch.tracking"), eq(key), any(DispatchCompletedDTO.class));
+
+        Exception exception = assertThrows(RuntimeException.class, () -> service.process(key, testEvent));
+
+        verify(kafkaProducerMock, times(1)).send(eq("dispatch.tracking"), eq(key), any(DispatchPreparingDTO.class));
+        verify(kafkaProducerMock, times(1)).send(eq("order.dispatched"), eq(key), any(OrderDispatchedDTO.class));
+        verify(kafkaProducerMock, times(1)).send(eq("dispatch.tracking"), eq(key), any(DispatchCompletedDTO.class));
+        assertThat(exception.getMessage(), equalTo("dispatch tracking producer failure"));
     }
 }

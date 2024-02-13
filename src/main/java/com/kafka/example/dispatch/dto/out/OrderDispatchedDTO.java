@@ -1,18 +1,19 @@
-package com.kafka.example.dispatch.dto;
+package com.kafka.example.dispatch.dto.out;
+
+import java.util.UUID;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.util.UUID;
-
 @Data
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class OrderCreatedDTO {
+public class OrderDispatchedDTO {
 
-    private UUID orderId;
-    private String item;
+    UUID orderId;
+    UUID processedById;
+    String notes;
 }

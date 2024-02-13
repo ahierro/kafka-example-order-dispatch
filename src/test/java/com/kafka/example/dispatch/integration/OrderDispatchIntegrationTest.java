@@ -1,7 +1,7 @@
 package com.kafka.example.dispatch.integration;
 
 import com.kafka.example.dispatch.DispatchConfiguration;
-import com.kafka.example.dispatch.dto.OrderCreatedDTO;
+import com.kafka.example.dispatch.dto.in.OrderCreatedDTO;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -49,9 +49,12 @@ public class OrderDispatchIntegrationTest {
 
         testListener.resetCounters();
 
-        // Wait until the partitions are assigned.
-        registry.getListenerContainers().forEach(container ->
-                ContainerTestUtils.waitForAssignment(container, embeddedKafkaBroker.getPartitionsPerTopic()));
+        // Wait until the partitions are assigned.  The application listener container has one topic and the test
+        // listener container has multiple topics, so take that into account when awaiting for topic assignment.
+        registry.getListenerContainers()
+                .forEach(container -> ContainerTestUtils.waitForAssignment(container,
+                        container.getContainerProperties().getTopics().length * embeddedKafkaBroker.getPartitionsPerTopic()));
+
     }
 
     /**
@@ -69,6 +72,8 @@ public class OrderDispatchIntegrationTest {
                 .until(testListener.dispatchPreparingCounter()::get, equalTo(1));
         await().atMost(1, TimeUnit.SECONDS).pollDelay(100, TimeUnit.MILLISECONDS)
                 .until(testListener.orderDispatchedCounter()::get, equalTo(1));
+        await().atMost(1, TimeUnit.SECONDS).pollDelay(100, TimeUnit.MILLISECONDS)
+                .until(testListener.dispatchCompletedCounter()::get, equalTo(1));
     }
 
     private void sendMessage(String topic, String key, Object data) throws Exception {

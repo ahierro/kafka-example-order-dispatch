@@ -3,7 +3,7 @@ package com.kafka.example.dispatch;
 import java.util.HashMap;
 import java.util.Map;
 
-import com.kafka.example.dispatch.dto.OrderCreatedDTO;
+import com.kafka.example.dispatch.dto.in.OrderCreatedDTO;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.common.serialization.StringDeserializer;
 import org.springframework.beans.factory.annotation.Value;
@@ -25,7 +25,6 @@ import org.apache.kafka.clients.producer.ProducerConfig;
 @ComponentScan(basePackages = {"com.kafka.example"})
 @Configuration
 public class DispatchConfiguration {
-
     @Bean
     public ConcurrentKafkaListenerContainerFactory<String, Object> kafkaListenerContainerFactory(ConsumerFactory<String, Object> consumerFactory) {
         ConcurrentKafkaListenerContainerFactory<String, Object> factory = new ConcurrentKafkaListenerContainerFactory<>();
@@ -39,8 +38,11 @@ public class DispatchConfiguration {
         config.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
         config.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, ErrorHandlingDeserializer.class);
         config.put(ErrorHandlingDeserializer.VALUE_DESERIALIZER_CLASS, JsonDeserializer.class);
+        //If VALUE_DEFAULT_TYPE is commented out it looks for __TypeId__ header and the value should be package and classname example com.kafka.example.dispatch.dto.in.OrderUpdatedDTO
         config.put(JsonDeserializer.VALUE_DEFAULT_TYPE, OrderCreatedDTO.class.getCanonicalName());
         config.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
+        config.put(JsonDeserializer.TRUSTED_PACKAGES, "com.kafka.example.dispatch.dto.out,com.kafka.example.dispatch.dto.in");
+
         return new DefaultKafkaConsumerFactory<>(config);
     }
 
