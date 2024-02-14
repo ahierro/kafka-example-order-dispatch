@@ -1,6 +1,5 @@
 package com.kafka.example.dispatch.integration;
 
-import com.kafka.example.dispatch.DispatchConfiguration;
 import com.kafka.example.dispatch.dto.in.OrderCreatedDTO;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.BeforeEach;
@@ -26,7 +25,7 @@ import static org.awaitility.Awaitility.await;
 import static org.hamcrest.Matchers.equalTo;
 
 @Slf4j
-@SpringBootTest(classes = {DispatchConfiguration.class})
+@SpringBootTest
 @DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_CLASS)//context reset after the current test class
 @ActiveProfiles("test")//Pulls configuration from application-test.properties
 @EmbeddedKafka(controlledShutdown = true, partitions = 1)
