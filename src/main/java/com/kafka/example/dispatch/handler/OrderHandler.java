@@ -2,6 +2,8 @@ package com.kafka.example.dispatch.handler;
 
 import com.kafka.example.dispatch.dto.in.OrderCreatedDTO;
 import com.kafka.example.dispatch.dto.in.OrderUpdatedDTO;
+import com.kafka.example.dispatch.exceptions.NotRetryableException;
+import com.kafka.example.dispatch.exceptions.RetryableException;
 import com.kafka.example.dispatch.service.DispatchService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -37,5 +39,6 @@ public class OrderHandler {
     @KafkaHandler
     public void listenOrderUpdated(@Header(KafkaHeaders.RECEIVED_PARTITION) Integer partition, @Header(KafkaHeaders.RECEIVED_KEY) String key, @Payload(expression = "") OrderUpdatedDTO payload) {
         log.info("Order updated -> Received message: partition: "+partition+" - key: " +key  + "updated by" + payload.getUpdatedBy());
+        throw new RetryableException();
     }
 }
