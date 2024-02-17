@@ -18,10 +18,7 @@ import org.springframework.messaging.handler.annotation.Payload;
 @RequiredArgsConstructor
 @Component
 @KafkaListener(
-        id = "orderConsumerClient",
-        topics = "order.created",
-        groupId = "dispatch.order.created.consumer",
-        containerFactory = "kafkaListenerContainerFactory"
+        topics = "order.created"
 )
 public class OrderHandler {
 
